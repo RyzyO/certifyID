@@ -6,6 +6,7 @@
   <title>Certified ID Generator</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body {
@@ -50,6 +51,10 @@
     </div>
     
     <div class="p-6 space-y-6">
+      <div class="flex items-center mb-4">
+        <label for="cropToggle" class="mr-2 text-sm font-medium text-gray-700">Auto-crop license</label>
+        <input type="checkbox" id="cropToggle" checked class="form-checkbox h-4 w-4 text-blue-600">
+      </div>
       <div class="space-y-2">
         <label class="block text-sm font-medium text-gray-700">Upload ID Image</label>
         <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 transition-colors">
@@ -155,27 +160,66 @@
     function handleFiles(e) {
       const file = e.target.files[0];
       if (!file) return;
-      
       previewFileName.textContent = file.name;
       previewFileName.classList.remove('hidden');
-      
+      const cropEnabled = document.getElementById('cropToggle').checked;
       const reader = new FileReader();
-      reader.onload = function(e) {
-        currentImageData = e.target.result;
+      reader.onload = function(ev) {
         const img = new Image();
         img.onload = function() {
-          // Create canvas to fix orientation
           const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
           canvas.width = img.width;
           canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0);
-          
-          const imgPreview = document.getElementById('imagePreview');
-          imgPreview.innerHTML = `<img src="${canvas.toDataURL()}" class="max-w-full max-h-64 rounded-md shadow" alt="Preview">`;
-          currentImageData = canvas.toDataURL(); // Update with oriented image
+          if (cropEnabled && typeof cv !== 'undefined' && cv.imread) {
+            let src = cv.imread(canvas);
+            let gray = new cv.Mat();
+            cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+            let blur = new cv.Mat();
+            cv.GaussianBlur(gray, blur, new cv.Size(5, 5), 0);
+            let edges = new cv.Mat();
+            cv.Canny(blur, edges, 50, 150);
+            let contours = new cv.MatVector();
+            let hierarchy = new cv.Mat();
+            cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+            let maxRect = null;
+            let maxArea = 0;
+            for (let i = 0; i < contours.size(); ++i) {
+              let cnt = contours.get(i);
+              let rect = cv.boundingRect(cnt);
+              let area = rect.width * rect.height;
+              if (area > maxArea) {
+                maxArea = area;
+                maxRect = rect;
+              }
+              cnt.delete();
+            }
+            let cropCanvas = document.createElement('canvas');
+            if (maxRect && maxArea > 10000) {
+              cropCanvas.width = maxRect.width;
+              cropCanvas.height = maxRect.height;
+              cropCanvas.getContext('2d').drawImage(
+                canvas,
+                maxRect.x, maxRect.y, maxRect.width, maxRect.height,
+                0, 0, maxRect.width, maxRect.height
+              );
+              imagePreview.innerHTML = `<img src="${cropCanvas.toDataURL()}" class="max-w-full max-h-64 rounded-md shadow" alt="Preview (cropped)">`;
+              currentImageData = cropCanvas.toDataURL();
+            } else {
+              imagePreview.innerHTML = `<img src="${canvas.toDataURL()}" class="max-w-full max-h-64 rounded-md shadow" alt="Preview">`;
+              currentImageData = canvas.toDataURL();
+            }
+            src.delete(); gray.delete(); blur.delete(); edges.delete(); contours.delete(); hierarchy.delete();
+          } else {
+            imagePreview.innerHTML = `<img src="${canvas.toDataURL()}" class="max-w-full max-h-64 rounded-md shadow" alt="Preview">`;
+            currentImageData = canvas.toDataURL();
+          }
         };
-        img.src = e.target.result;
+        img.onerror = function() {
+          imagePreview.innerHTML = '<p class="text-red-500 italic">Image preview failed.</p>';
+        };
+        img.src = ev.target.result;
       };
       reader.readAsDataURL(file);
     }
