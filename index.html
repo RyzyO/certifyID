@@ -221,11 +221,35 @@
       const formattedTextDate = `${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}/${date.getFullYear()}`;
       const pdfName = `5. ${formattedFileDate} Certified ID.pdf`;
 
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const imgData = e.target.result;
-        const img = new Image();
+      const fileInput = document.getElementById("imageUpload");
+      const dateValue = document.getElementById("dateInput").value;
 
+      if (!fileInput.files[0] || !dateValue) {
+        alert("Please upload an image and select a date.");
+        return;
+      }
+
+      const date = new Date(dateValue);
+      const formattedFileDate = `${date.getFullYear()}.${String(date.getMonth()+1).padStart(2,'0')}.${String(date.getDate()).padStart(2,'0')}`;
+      const formattedTextDate = `${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}/${date.getFullYear()}`;
+      const pdfName = `5. ${formattedFileDate} Certified ID.pdf`;
+
+      // Use the previewed image if available (handles orientation)
+      let imgData = currentImageData;
+      if (!imgData) {
+        // fallback: read file directly
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          imgData = e.target.result;
+          createPDF(imgData);
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        createPDF(imgData);
+      }
+
+      function createPDF(imgData) {
+        const img = new window.Image();
         img.onload = function() {
           const doc = new jsPDF();
           const pageWidth = doc.internal.pageSize.getWidth();
@@ -243,7 +267,11 @@
           const x = (pageWidth - imgWidth) / 2;
           const y = 20;
 
-          doc.addImage(img, 'JPEG', x, y, imgWidth, imgHeight);
+          // Detect image type
+          let imgType = 'JPEG';
+          if (imgData.startsWith('data:image/png')) imgType = 'PNG';
+
+          doc.addImage(imgData, imgType, x, y, imgWidth, imgHeight);
 
           doc.setFont("times", "normal");
           doc.setFontSize(12);
@@ -268,10 +296,11 @@ Sentry Advice AFSL 227748`;
 
           doc.save(pdfName);
         };
-
+        img.onerror = function() {
+          alert("Failed to load image for PDF export. Please try a different image.");
+        };
         img.src = imgData;
-      };
-      reader.readAsDataURL(fileInput);
+      }
     }
   </script>
 </body>
