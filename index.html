@@ -2,149 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Certified ID Generator</title>
-  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: #f8fafc;
-    }
-    .preview-container {
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-      background: white;
-      border-radius: 0.5rem;
-    }
-    .btn-primary {
-      background-color: #3b82f6;
-      transition: all 0.2s ease;
-    }
-    .btn-primary:hover {
-      background-color: #2563eb;
-      transform: translateY(-1px);
-    }
-    .btn-primary:active {
-      transform: translateY(0);
-    }
-    .file-input::file-selector-button {
-      background-color: #e2e8f0;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 0.25rem;
-      margin-right: 1rem;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-    .file-input::file-selector-button:hover {
-      background-color: #cbd5e1;
-    }
-  </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-4">
-  <div class="w-full max-w-3xl bg-white rounded-xl shadow-lg overflow-hidden">
-    <div class="bg-blue-600 py-4 px-6">
-      <h1 class="text-2xl font-bold text-white">Certified ID Generator</h1>
-      <p class="text-blue-100">Owen Oakes Financial</p>
-    </div>
-    
-    <div class="p-6 space-y-6">
-      <div class="space-y-2">
-        <label class="block text-sm font-medium text-gray-700">Upload ID Image</label>
-        <input type="file" id="imageUpload" accept="image/*" class="file-input block w-full text-sm text-gray-500
-          file:mr-4 file:py-2 file:px-4
-          file:rounded-md file:border-0
-          file:text-sm file:font-semibold
-          file:bg-blue-50 file:text-blue-700
-          hover:file:bg-blue-100">
-      </div>
-      
-      <div class="space-y-2">
-        <label class="block text-sm font-medium text-gray-700">Certification Date</label>
-        <input type="date" id="dateInput" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
-      </div>
-      
-      <div class="flex space-x-4">
-        <button onclick="previewPDF()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition">Preview</button>
-        <button onclick="generatePDF()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-          </svg>
-          Download PDF
-        </button>
-      </div>
-    </div>
-    
-    <div id="previewSection" class="hidden p-6 border-t border-gray-200">
-      <h3 class="text-lg font-medium text-gray-900 mb-4">Document Preview</h3>
-      <div class="preview-container p-4">
-        <div id="imagePreview" class="mb-4 flex justify-center">
-          <p class="text-gray-500 italic">Upload an image to see preview</p>
-        </div>
-        <div id="textPreview" class="text-center text-sm text-gray-700 space-y-2">
-          <p>Date will appear here</p>
-          <p class="mt-4">I hereby certify this to be a true and correct copy of the original document.</p>
-          <p class="mt-8">Brendan Oakes</p>
-          <p>Level 5, Nexus Building, 4 Columbia Crt, Norwest NSW 2153</p>
-          <p>0410 558 706</p>
-          <p>AR 263573</p>
-          <p>Sentry Advice AFSL 227748</p>
-        </div>
-      </div>
-    </div>
-  </div>
+<body style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
+
+  <h2>Certified ID PDF Generator</h2>
+
+  <input type="file" id="imageUpload" accept="image/*"><br><br>
+  <label>Select Date: </label>
+  <input type="date" id="dateInput"><br><br>
+  <button onclick="generatePDF()">Download PDF</button>
 
   <script>
-    const { jsPDF } = window.jspdf;
-    let currentImageData = null;
-    let currentDateValue = null;
-
-    document.getElementById('imageUpload').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        currentImageData = e.target.result;
-        const imgPreview = document.getElementById('imagePreview');
-        imgPreview.innerHTML = `<img src="${currentImageData}" class="max-w-full max-h-64 rounded-md shadow" alt="Preview">`;
-      };
-      reader.readAsDataURL(file);
-    });
-
-    document.getElementById('dateInput').addEventListener('change', function() {
-      currentDateValue = this.value;
-      if (!currentDateValue) return;
-      
-      const date = new Date(currentDateValue);
-      const formattedTextDate = `${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}/${date.getFullYear()}`;
-      
-      const textPreview = document.getElementById('textPreview');
-      textPreview.innerHTML = `
-        <p>${formattedTextDate}</p>
-        <p class="mt-4">I hereby certify this to be a true and correct copy of the original document.</p>
-        <p class="mt-8">Brendan Oakes</p>
-        <p>Level 5, Nexus Building, 4 Columbia Crt, Norwest NSW 2153</p>
-        <p>0410 558 706</p>
-        <p>AR 263573</p>
-        <p>Sentry Advice AFSL 227748</p>
-      `;
-    });
-
-    function previewPDF() {
-      const fileInput = document.getElementById("imageUpload").files[0];
-      const dateValue = document.getElementById("dateInput").value;
-
-      if (!fileInput || !dateValue) {
-        alert("Please upload an image and select a date to preview.");
-        return;
-      }
-      
-      document.getElementById('previewSection').classList.remove('hidden');
-    }
-
     async function generatePDF() {
+      const { jsPDF } = window.jspdf;
       const fileInput = document.getElementById("imageUpload").files[0];
       const dateValue = document.getElementById("dateInput").value;
 
@@ -153,36 +25,46 @@
         return;
       }
 
+      // Format date for filename (YYYY.MM.DD)
       const date = new Date(dateValue);
       const formattedFileDate = `${date.getFullYear()}.${String(date.getMonth()+1).padStart(2,'0')}.${String(date.getDate()).padStart(2,'0')}`;
+      // Format date for certification text (DD/MM/YYYY)
       const formattedTextDate = `${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}/${date.getFullYear()}`;
+
       const pdfName = `5. ${formattedFileDate} Certified ID.pdf`;
 
       const reader = new FileReader();
       reader.onload = function(e) {
-        const imgData = e.target.result;
         const img = new Image();
-
         img.onload = function() {
           const doc = new jsPDF();
           const pageWidth = doc.internal.pageSize.getWidth();
           const pageHeight = doc.internal.pageSize.getHeight();
 
+          // Max allowed size
           const maxWidth = pageWidth - 30;
           const maxHeight = pageHeight / 2;
-          let imgWidth = img.width;
-          let imgHeight = img.height;
+
+          // Scale preserving aspect ratio
+          let imgWidth = img.naturalWidth;
+          let imgHeight = img.naturalHeight;
           const ratio = Math.min(maxWidth / imgWidth, maxHeight / imgHeight);
 
           imgWidth *= ratio;
           imgHeight *= ratio;
 
+          // Center image
           const x = (pageWidth - imgWidth) / 2;
           const y = 20;
 
-          doc.addImage(img, 'JPEG', x, y, imgWidth, imgHeight);
+          // Detect format
+          const format = fileInput.type.includes("png") ? "PNG" : "JPEG";
 
-          doc.setFont("times", "normal");
+          // Add image with forced rotation 0
+          doc.addImage(img, format, x, y, imgWidth, imgHeight, null, "FAST", 0);
+
+          // Text below image
+          doc.setFont("times", "normal"); // closest to Bookman Old Style
           doc.setFontSize(12);
 
           const certText = `${formattedTextDate}
@@ -205,8 +87,7 @@ Sentry Advice AFSL 227748`;
 
           doc.save(pdfName);
         };
-
-        img.src = imgData;
+        img.src = e.target.result;
       };
       reader.readAsDataURL(fileInput);
     }
