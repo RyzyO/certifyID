@@ -50,6 +50,7 @@
     }
   </style>
 </head>
+  <!-- Removed Dropbox Saver script -->
 <body class="min-h-screen flex flex-col items-center justify-center p-4">
   <div class="w-full max-w-3xl bg-white rounded-xl shadow-lg overflow-hidden">
     <div class="bg-blue-600 py-4 px-6">
@@ -93,6 +94,12 @@
           </svg>
           Download PDF
         </button>
+        <button id="addToFilesBtn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 13v-1a4 4 0 00-4-4H8a4 4 0 00-4 4v1m4 4l4-4m0 0l4 4m-4-4V4" />
+          </svg>
+          Save to Files
+        </button>
       </div>
     </div>
     
@@ -119,6 +126,79 @@
     const { jsPDF } = window.jspdf;
     let currentImageData = null;
     let currentDateValue = null;
+
+    // Save to Files button logic
+    document.getElementById('addToFilesBtn').addEventListener('click', async function() {
+      const fileInput = document.getElementById("imageUpload");
+      const dateValue = document.getElementById("dateInput").value;
+      if (!fileInput.files[0] || !dateValue) {
+        alert("Please upload an image and select a date.");
+        return;
+      }
+      const date = new Date(dateValue);
+      const formattedFileDate = `${date.getFullYear()}.${String(date.getMonth()+1).padStart(2,'0')}.${String(date.getDate()).padStart(2,'0')}`;
+      const formattedTextDate = `${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}/${date.getFullYear()}`;
+      const pdfName = `5. ${formattedFileDate} Certified ID.pdf`;
+
+      let imgData = currentImageData;
+      if (!imgData) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          imgData = e.target.result;
+          createAndDownloadPDF(imgData);
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        createAndDownloadPDF(imgData);
+      }
+
+      function createAndDownloadPDF(imgData) {
+        const img = new window.Image();
+        img.onload = function() {
+          const doc = new jsPDF();
+          const pageWidth = doc.internal.pageSize.getWidth();
+          const pageHeight = doc.internal.pageSize.getHeight();
+          const maxWidth = pageWidth - 30;
+          const maxHeight = pageHeight / 2;
+          let imgWidth = img.width;
+          let imgHeight = img.height;
+          const ratio = Math.min(maxWidth / imgWidth, maxHeight / imgHeight);
+          imgWidth *= ratio;
+          imgHeight *= ratio;
+          const x = (pageWidth - imgWidth) / 2;
+          const y = 20;
+          let imgType = 'JPEG';
+          if (imgData.startsWith('data:image/png')) imgType = 'PNG';
+          doc.addImage(imgData, imgType, x, y, imgWidth, imgHeight);
+          doc.setFont("times", "normal");
+          doc.setFontSize(12);
+          const certText = `${formattedTextDate}\n\nI hereby certify this to be a true and correct copy of the original document.\n\n\nBrendan Oakes\nLevel 5, Nexus Building, 4 Columbia Crt, Norwest NSW 2153\n0410 558 706\nAR 263573\nSentry Advice AFSL 227748`;
+          const lines = certText.split("\n");
+          let yText = y + imgHeight + 20;
+          lines.forEach(line => {
+            doc.text(line, pageWidth / 2, yText, { align: "center" });
+            yText += 8;
+          });
+          doc.outputAsync('blob').then(function(pdfBlob) {
+            const pdfUrl = URL.createObjectURL(pdfBlob);
+            const a = document.createElement('a');
+            a.href = pdfUrl;
+            a.download = pdfName;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+              document.body.removeChild(a);
+              URL.revokeObjectURL(pdfUrl);
+              alert('PDF downloaded. On iOS, choose "Save to Files" to store it in Apple Files or iCloud.');
+            }, 100);
+          });
+        };
+        img.onerror = function() {
+          alert("Failed to load image for PDF export. Please try a different image.");
+        };
+        img.src = imgData;
+      }
+    });
 
   // --- Clean, robust, and working implementation ---
     // Handle drag and drop
