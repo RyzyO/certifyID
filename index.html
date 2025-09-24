@@ -108,13 +108,17 @@
     let currentImageData = null;
     let currentDateValue = null;
 
+  // --- Clean, robust, and working implementation ---
     // Handle drag and drop
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('imageUpload');
     const previewFileName = document.getElementById('previewFileName');
     
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-      dropZone.addEventListener(eventName, preventDefaults, false);
+      dropZone.addEventListener(eventName, e => {
+        e.preventDefault();
+        e.stopPropagation();
+      }, false);
     });
 
     function preventDefaults(e) {
@@ -221,18 +225,6 @@
       const formattedTextDate = `${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}/${date.getFullYear()}`;
       const pdfName = `5. ${formattedFileDate} Certified ID.pdf`;
 
-      const fileInput = document.getElementById("imageUpload");
-      const dateValue = document.getElementById("dateInput").value;
-
-      if (!fileInput.files[0] || !dateValue) {
-        alert("Please upload an image and select a date.");
-        return;
-      }
-
-      const date = new Date(dateValue);
-      const formattedFileDate = `${date.getFullYear()}.${String(date.getMonth()+1).padStart(2,'0')}.${String(date.getDate()).padStart(2,'0')}`;
-      const formattedTextDate = `${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}/${date.getFullYear()}`;
-      const pdfName = `5. ${formattedFileDate} Certified ID.pdf`;
 
       // Use the previewed image if available (handles orientation)
       let imgData = currentImageData;
