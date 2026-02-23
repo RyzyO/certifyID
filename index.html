@@ -182,26 +182,18 @@
                   const email = 'robynoakes2+aarrfxp0fu9nyi8osrjk@boards.trello.com';
                   const subject = encodeURIComponent('Certified ID PDF');
                   const body = encodeURIComponent('Please find attached the certified ID PDF.');
-                  if (navigator.canShare && navigator.canShare({ files: [new File([pdfBlob], pdfName, { type: 'application/pdf' })] })) {
-                    navigator.share({
-                      files: [new File([pdfBlob], pdfName, { type: 'application/pdf' })],
-                      title: 'Certified ID PDF',
-                      text: 'Please find attached the certified ID PDF.',
-                    });
-                  } else {
-                    window.open(`mailto:${email}?subject=${subject}&body=${body}`);
-                    setTimeout(() => {
-                      const a = document.createElement('a');
-                      a.href = pdfUrl;
-                      a.download = pdfName;
-                      a.style.display = 'none';
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                      URL.revokeObjectURL(pdfUrl);
-                      alert('PDF downloaded. Please attach it to the email.');
-                    }, 500);
-                  }
+                  window.open(`mailto:${email}?subject=${subject}&body=${body}`);
+                  setTimeout(() => {
+                    const a = document.createElement('a');
+                    a.href = pdfUrl;
+                    a.download = pdfName;
+                    a.style.display = 'none';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(pdfUrl);
+                    alert('PDF downloaded. Please attach it to the email.');
+                  }, 500);
                 };
                 img.onerror = function() {
                   alert("Failed to load image for PDF export. Please try a different image.");
@@ -270,28 +262,18 @@
               const email = 'prize.lucky.unaware.lab.twenty@addtodropbox.com';
               const subject = encodeURIComponent('Certified ID PDF');
               const body = encodeURIComponent('Please find attached the certified ID PDF.');
-              // Try to use navigator.share if available (mobile)
-              if (navigator.canShare && navigator.canShare({ files: [new File([pdfBlob], pdfName, { type: 'application/pdf' })] })) {
-                navigator.share({
-                  files: [new File([pdfBlob], pdfName, { type: 'application/pdf' })],
-                  title: 'Certified ID PDF',
-                  text: 'Please find attached the certified ID PDF.',
-                });
-              } else {
-                // Fallback: open mailto and prompt user to attach PDF manually
-                window.open(`mailto:${email}?subject=${subject}&body=${body}`);
-                setTimeout(() => {
-                  const a = document.createElement('a');
-                  a.href = pdfUrl;
-                  a.download = pdfName;
-                  a.style.display = 'none';
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
-                  URL.revokeObjectURL(pdfUrl);
-                  alert('PDF downloaded. Please attach it to the email.');
-                }, 500);
-              }
+              window.open(`mailto:${email}?subject=${subject}&body=${body}`);
+              setTimeout(() => {
+                const a = document.createElement('a');
+                a.href = pdfUrl;
+                a.download = pdfName;
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(pdfUrl);
+                alert('PDF downloaded. Please attach it to the email.');
+              }, 500);
             };
             img.onerror = function() {
               alert("Failed to load image for PDF export. Please try a different image.");
